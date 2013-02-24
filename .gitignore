@@ -18,3 +18,4 @@ missing
 *.lo
 *.o
 docs
+m4
