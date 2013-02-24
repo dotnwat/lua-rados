@@ -1,9 +1,19 @@
+/**
+@module lua-rados
+*/
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 
 #include <rados/librados.h>
 
+/**
+Get the version of librados.
+@function version
+@return major
+@return minor
+@return extra
+ */
 static int lrad_version(lua_State *L)
 {
 	int major, minor, extra;
