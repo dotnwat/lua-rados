@@ -14,6 +14,22 @@ static inline rados_t *lrad_checkcluster(lua_State *L, int pos)
 	return luaL_checkudata(L, pos, LRAD_TRADOS_T);
 }
 
+static int lrad_pusherror(lua_State *L, int ret)
+{
+	lua_pushnil(L);
+	lua_pushfstring(L, "%s", strerror(ret));
+	lua_pushinteger(L, ret);
+	return 3;
+}
+
+static int lrad_pushresult(lua_State *L, int ok, int ret)
+{
+	if (!ok)
+		return lrad_pusherror(L, ret);
+	lua_pushinteger(L, ret);
+	return 1;
+}
+
 /**
 Get the version of librados.
 @function version
@@ -21,7 +37,7 @@ Get the version of librados.
 @return minor version
 @return extra version
 @usage major, minor, extra = rados.version()
- */
+*/
 static int lrad_version(lua_State *L)
 {
 	int major, minor, extra;
@@ -39,8 +55,9 @@ static int lrad_version(lua_State *L)
 Create handle for communicating with RADOS cluster.
 @function create
 @string id the user to connect as (optional, or nil)
+@return cluster handle object on success, nil otherwise
+@return error message and retval if failed
 @usage cluster = rados.create()
-@usage cluster = rados.create(nil)
 @usage cluster = rados.create('admin')
 */
 static int lrad_create(lua_State *L)
@@ -59,19 +76,16 @@ static int lrad_create(lua_State *L)
 	lua_setmetatable(L, -2);
 
 	ret = rados_create(cluster, id);
-	if (ret) {
-		lua_pushnil(L);
-		lua_pushfstring(L, "%s", strerror(ret));
-		lua_pushinteger(L, ret);
-		return 3;
-	}
+	if (ret)
+		return lrad_pusherror(L, ret);
 
+	/* return the userdata */
 	return 1;
 }
 
 /**
 @type Cluster
- */
+*/
 
 /**
 Configure the cluster handle using a Ceph config file.
@@ -80,9 +94,8 @@ Configure the cluster handle using a Ceph config file.
 @return 0 on success, nil otherwise
 @return error message and retval if failed
 @usage cluster:conf_read_file()
-@usage cluster:conf_read_file(nil)
 @usage cluster:conf_read_file('/path/to/ceph.conf')
- */
+*/
 static int lrad_conf_read_file(lua_State *L)
 {
 	rados_t *cluster = lrad_checkcluster(L, 1);
@@ -95,15 +108,8 @@ static int lrad_conf_read_file(lua_State *L)
 	}
 
 	ret = rados_conf_read_file(*cluster, conf_file);
-	if (ret) {
-		lua_pushnil(L);
-		lua_pushfstring(L, "%s", strerror(ret));
-		lua_pushinteger(L, ret);
-		return 3;
-	}
 
-	lua_pushinteger(L, ret);
-	return 1;
+	return lrad_pushresult(L, (ret == 0), ret);
 }
 
 /**
@@ -113,22 +119,15 @@ Connect to the cluster.
 @return error message and retval if failed
 @usage cluster:connect()
 @usage status, errstr, ret = cluster:connect()
- */
+*/
 static int lrad_connect(lua_State *L)
 {
 	rados_t *cluster = lrad_checkcluster(L, 1);
 	int ret;
 
 	ret = rados_connect(*cluster);
-	if (ret) {
-		lua_pushnil(L);
-		lua_pushfstring(L, "%s", strerror(-ret));
-		lua_pushinteger(L, ret);
-		return 3;
-	}
 
-	lua_pushinteger(L, ret);
-	return 1;
+	return lrad_pushresult(L, (ret == 0), ret);
 }
 
 static const luaL_Reg clusterlib_m[] = {
