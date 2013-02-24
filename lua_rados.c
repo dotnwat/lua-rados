@@ -9,9 +9,50 @@
 
 #define LRAD_TRADOS_T "Rados.RadosT"
 
-static inline rados_t *lrad_checkcluster(lua_State *L, int pos)
+typedef enum {
+	CREATED,
+	CONNECTED,
+	SHUTDOWN
+} cluster_state_t;
+
+struct lrad_cluster {
+	rados_t cluster;
+	cluster_state_t state;
+};
+
+/*
+ * Get cluster object at stack index.
+ */
+static inline struct lrad_cluster *__lrad_checkcluster(lua_State *L, int pos)
 {
-	return luaL_checkudata(L, pos, LRAD_TRADOS_T);
+	struct lrad_cluster *cluster = luaL_checkudata(L, pos, LRAD_TRADOS_T);
+	return cluster;
+}
+
+/*
+ * Get non-shutdown cluster object at stack index. Error if had shutdown.
+ */
+static inline struct lrad_cluster *lrad_checkcluster(lua_State *L, int pos)
+{
+	struct lrad_cluster *cluster = __lrad_checkcluster(L, pos);
+
+	if (cluster->state == SHUTDOWN)
+		luaL_argerror(L, pos, "cannot reuse shutdown cluster handle");
+
+	return cluster;
+}
+
+/*
+ * Get connected cluster object at stack index. Error if not connected.
+ */
+static inline struct lrad_cluster *lrad_checkcluster_conn(lua_State *L, int pos)
+{
+	struct lrad_cluster *cluster = lrad_checkcluster(L, pos);
+
+	if (cluster->state != CONNECTED)
+		luaL_argerror(L, pos, "not connected to cluster");
+
+	return cluster;
 }
 
 static int lrad_pusherror(lua_State *L, int ret)
@@ -63,7 +104,7 @@ Create handle for communicating with RADOS cluster.
 static int lrad_create(lua_State *L)
 {
 	const char *id = NULL;
-	rados_t *cluster;
+	struct lrad_cluster *cluster;
 	int ret;
 
 	if (lua_gettop(L) > 0 && lua_type(L, 1) != LUA_TNIL) {
@@ -72,10 +113,12 @@ static int lrad_create(lua_State *L)
 	}
 
 	cluster = lua_newuserdata(L, sizeof(*cluster));
+	cluster->state = CREATED;
+
 	luaL_getmetatable(L, LRAD_TRADOS_T);
 	lua_setmetatable(L, -2);
 
-	ret = rados_create(cluster, id);
+	ret = rados_create(&cluster->cluster, id);
 	if (ret)
 		return lrad_pusherror(L, ret);
 
@@ -98,7 +141,7 @@ Configure the cluster handle using a Ceph config file.
 */
 static int lrad_conf_read_file(lua_State *L)
 {
-	rados_t *cluster = lrad_checkcluster(L, 1);
+	struct lrad_cluster *cluster = lrad_checkcluster(L, 1);
 	const char *conf_file = NULL;
 	int ret;
 
@@ -107,7 +150,7 @@ static int lrad_conf_read_file(lua_State *L)
 		conf_file = lua_tostring(L, 2);
 	}
 
-	ret = rados_conf_read_file(*cluster, conf_file);
+	ret = rados_conf_read_file(cluster->cluster, conf_file);
 
 	return lrad_pushresult(L, (ret == 0), ret);
 }
@@ -122,17 +165,52 @@ Connect to the cluster.
 */
 static int lrad_connect(lua_State *L)
 {
-	rados_t *cluster = lrad_checkcluster(L, 1);
+	struct lrad_cluster *cluster = lrad_checkcluster(L, 1);
 	int ret;
 
-	ret = rados_connect(*cluster);
+	if (cluster->state == CONNECTED)
+		luaL_argerror(L, 1, "already connected to cluster");
+
+	ret = rados_connect(cluster->cluster);
+	if (!ret)
+		cluster->state = CONNECTED;
 
 	return lrad_pushresult(L, (ret == 0), ret);
+}
+
+/**
+Disconnect from the cluster.
+@function shutdown
+@usage cluster:shutdown()
+*/
+static int lrad_shutdown(lua_State *L)
+{
+	struct lrad_cluster *cluster = lrad_checkcluster_conn(L, 1);
+
+	rados_shutdown(cluster->cluster);
+
+	cluster->state = SHUTDOWN;
+
+	return 0;
+}
+
+static int lrad_cluster_gc(lua_State *L)
+{
+	struct lrad_cluster *cluster = __lrad_checkcluster(L, 1);
+
+	if (cluster->state == CONNECTED)
+		rados_shutdown(cluster->cluster);
+
+	cluster->state = SHUTDOWN;
+
+	return 0;
 }
 
 static const luaL_Reg clusterlib_m[] = {
 	{"conf_read_file", lrad_conf_read_file},
 	{"connect", lrad_connect},
+	{"shutdown", lrad_shutdown},
+	{"__gc", lrad_cluster_gc},
 	{NULL, NULL}
 };
 

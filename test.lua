@@ -43,10 +43,43 @@ describe("create", function()
   end)
 end)
 
-describe("connect", function()
-  it("connects", function()
-    cluster = rados.create()
-    cluster:conf_read_file()
-    assert(cluster:connect())
+describe("cluster object", function()
+  local cluster_new, cluster_conn, cluster_down
+
+  before_each(function()
+    cluster_new = rados.create()
+
+    cluster_conn = rados.create()
+    cluster_conn:conf_read_file()
+    cluster_conn:connect()
+
+    cluster_down = rados.create()
+    cluster_down:conf_read_file()
+    cluster_down:connect()
+    cluster_down:shutdown()
+  end)
+
+  describe("connect method", function()
+    it("throws error if connected", function()
+      assert.error(function() cluster_conn:connect() end)
+    end)
+
+    it("throws error if shutdown", function()
+      assert.error(function() cluster_down:connect() end)
+    end)
+  end)
+
+  describe("shutdown method", function()
+    it("succeeds if connected", function()
+      cluster_conn:shutdown()
+    end)
+
+    it("throws error if not connected", function()
+      assert.error(function() cluster_new:shutdown() end)
+    end)
+
+    it("throws error if shutdown", function()
+      assert.error(function() cluster_down:shutdown() end)
+    end)
   end)
 end)
