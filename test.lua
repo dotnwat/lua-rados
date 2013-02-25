@@ -82,4 +82,57 @@ describe("cluster object", function()
       assert.error(function() cluster_down:shutdown() end)
     end)
   end)
+
+  describe("open_ioctx method", function()
+    it("returns a userdata object", function()
+      assert.is_userdata(cluster_conn:open_ioctx('data'))
+    end)
+
+    it("throws error without pool name", function()
+      assert.error(function() cluster_conn:open_ioctx() end)
+    end)
+
+    it("throws error with non-string param", function()
+      assert.error(function() cluster_conn:open_ioctx({}) end)
+    end)
+
+    it("returns nil for non-existent pools", function()
+      assert.is_nil(cluster_conn:open_ioctx(23423432))
+      assert.is_nil(cluster_conn:open_ioctx('asdlfk'))
+    end)
+
+    it("throws error if not connected", function()
+      assert.error(function() cluster_new:open_ioctx('data') end)
+    end)
+
+    it("throws error if shutdown", function()
+      assert.error(function() cluster_down:open_ioctx('data') end)
+    end)
+  end)
+end)
+
+describe("ioctx object", function()
+  local cluster, ioctx
+
+  before_each(function()
+    cluster = rados.create()
+    cluster:conf_read_file()
+    cluster:connect()
+    ioctx = cluster:open_ioctx('data')
+  end)
+
+  describe("write method", function()
+    it("returns number of bytes written", function()
+      local data = 'wkjeflkwjelfkjwelfkjwef'
+      assert.is_equal(#data, ioctx:write('oid', data, #data, 0))
+    end)
+  end)
+
+  describe("read method", function()
+    it("will read what has been written", function()
+      local data = 'whoopie doo'
+      ioctx:write('oid', data, #data, 0);
+      assert.is_equal(data, ioctx:read('oid', #data, 0))
+    end)
+  end)
 end)
