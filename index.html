@@ -88,6 +88,10 @@
 	<td class="summary">Close the I/O context.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Ioctx:stat">Ioctx:stat&nbsp;(oid)</a></td>
+	<td class="summary">Get object stat info (size/mtime)</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Ioctx:write">Ioctx:write&nbsp;(oid, buf, length, offset)</a></td>
 	<td class="summary">Write data to an object.</td>
 	</tr>
@@ -264,6 +268,31 @@
         <pre class="example">ioctx:close()</pre>
     </ul>
 
+
+
+</dd>
+    <dt>
+    <a name = "Ioctx:stat"></a>
+    <strong>Ioctx:stat&nbsp;(oid)</strong>
+    </dt>
+    <dd>
+    Get object stat info (size/mtime) 
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>oid</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  object name</li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">size, mtime = ioctx:stat('obj3')</pre>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>len, mtime, or nil on failure</li>
+        <li>errstr and retval if failed</li>
+    </ol>
 
 
 </dd>
