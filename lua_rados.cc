@@ -3,9 +3,11 @@
 */
 #include <errno.h>
 
+extern "C" {
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+}
 
 #include <rados/librados.h>
 
@@ -28,7 +30,7 @@ struct lrad_cluster {
  */
 static inline struct lrad_cluster *__lrad_checkcluster(lua_State *L, int pos)
 {
-	struct lrad_cluster *cluster = luaL_checkudata(L, pos, LRAD_TRADOS_T);
+	struct lrad_cluster *cluster = (struct lrad_cluster *)luaL_checkudata(L, pos, LRAD_TRADOS_T);
 	return cluster;
 }
 
@@ -63,7 +65,7 @@ static inline struct lrad_cluster *lrad_checkcluster_conn(lua_State *L, int pos)
  */
 static inline rados_ioctx_t *lrad_checkioctx(lua_State *L, int pos)
 {
-	return luaL_checkudata(L, pos, LRAD_TIOCTX_T);
+	return (rados_ioctx_t *)luaL_checkudata(L, pos, LRAD_TIOCTX_T);
 }
 
 static int lrad_pusherror(lua_State *L, int ret)
@@ -123,7 +125,7 @@ static int lrad_create(lua_State *L)
 		id = lua_tostring(L, 1);
 	}
 
-	cluster = lua_newuserdata(L, sizeof(*cluster));
+	cluster = (struct lrad_cluster *)lua_newuserdata(L, sizeof(*cluster));
 	cluster->state = CREATED;
 
 	luaL_getmetatable(L, LRAD_TRADOS_T);
@@ -220,7 +222,7 @@ static int lrad_open_ioctx(lua_State *L)
 	rados_ioctx_t *ioctx;
 	int ret;
 
-	ioctx = lua_newuserdata(L, sizeof(*ioctx));
+	ioctx = (rados_ioctx_t *)lua_newuserdata(L, sizeof(*ioctx));
 	luaL_getmetatable(L, LRAD_TIOCTX_T);
 	lua_setmetatable(L, -2);
 
@@ -333,11 +335,12 @@ static int lrad_ioctx_read(lua_State *L)
 	const char *oid = luaL_checkstring(L, 2);
 	size_t len = luaL_checkint(L, 3);
 	uint64_t off = luaL_checkint(L, 4);
-	void *ud, *buf;
+	void *ud;
+  char *buf;
 	lua_Alloc lalloc = lua_getallocf(L, &ud);
 	int ret;
 
-	buf = lalloc(ud, NULL, 0, len);
+	buf = (char *)lalloc(ud, NULL, 0, len);
 	if (!buf && len > 0)
 		return lrad_pusherror(L, -ENOMEM);
 
