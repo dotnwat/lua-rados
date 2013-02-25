@@ -135,15 +135,15 @@ describe("ioctx object", function()
       assert.is_equal(data, ioctx:read('oid', #data, 0))
     end)
   end)
-	
-	describe("stat method", function()
-		it("returns size and last modify time of object", function()
-    local data = 'wkjeflkwjelfkjwelfkjwef'
-		local length, mtime
-		ioctx:write('oid', data, #data, 0);
-		length, mtime = ioctx:stat('oid')
-		assert.is_equal(#data, length)
-		end)
-	end)
+
+  describe("stat method", function()
+    it("returns size and last modify time of object", function()
+      local data = 'wkjeflkwjelfkjwelfkjwef'
+      local length, mtime
+      ioctx:write('oid', data, #data, 0);
+      length, mtime = ioctx:stat('oid')
+      assert.is_equal(#data, length)
+    end)
+  end)
 
 end)

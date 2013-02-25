@@ -275,19 +275,19 @@ Get object stat info (size/mtime)
 */
 static int lrad_ioctx_stat(lua_State *L)
 {
-  rados_ioctx_t *ioctx = lrad_checkioctx(L, 1);
+	rados_ioctx_t *ioctx = lrad_checkioctx(L, 1);
 	const char *oid = luaL_checkstring(L, 2);
-	uint64_t len; 
+	uint64_t len;
 	time_t mtime;
 	int ret;
 
-	ret = rados_stat(*ioctx, oid, &len, &mtime );	
-	
+	ret = rados_stat(*ioctx, oid, &len, &mtime);
+
 	if (ret)
 		return lrad_pusherror(L, ret);
 
 	lua_pushinteger(L, len);
-	lua_pushinteger(L, mtime);	
+	lua_pushinteger(L, mtime);
 	/* return the userdata */
 	return 2;
 }
