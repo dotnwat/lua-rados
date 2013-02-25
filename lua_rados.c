@@ -266,6 +266,33 @@ static int lrad_ioctx_close(lua_State *L)
 }
 
 /**
+Get object stat info (size/mtime)
+@function stat 
+@string oid object name
+@returns len, mtime, or nil on failure
+@returns errstr and retval if failed
+@usage size, mtime = ioctx:stat('obj3')
+*/
+static int lrad_ioctx_stat(lua_State *L)
+{
+  rados_ioctx_t *ioctx = lrad_checkioctx(L, 1);
+	const char *oid = luaL_checkstring(L, 2);
+	uint64_t len; 
+	time_t mtime;
+	int ret;
+
+	ret = rados_stat(*ioctx, oid, &len, &mtime );	
+	
+	if (ret)
+		return lrad_pusherror(L, ret);
+
+	lua_pushinteger(L, len);
+	lua_pushinteger(L, mtime);	
+	/* return the userdata */
+	return 2;
+}
+
+/**
 Write data to an object.
 @function write
 @string oid object name
@@ -338,6 +365,7 @@ static const luaL_Reg ioctxlib_m[] = {
 	{"close", lrad_ioctx_close},
 	{"write", lrad_ioctx_write},
 	{"read", lrad_ioctx_read},
+	{"stat", lrad_ioctx_stat},
 	{NULL, NULL}
 };
 
