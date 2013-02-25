@@ -88,11 +88,11 @@
 	<td class="summary">Close the I/O context.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Ioctx:write">Ioctx:write&nbsp;(object, buffer, length, offset)</a></td>
+	<td class="name" nowrap><a href="#Ioctx:write">Ioctx:write&nbsp;(oid, buf, length, offset)</a></td>
 	<td class="summary">Write data to an object.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#Ioctx:read">Ioctx:read&nbsp;(object, length, offset)</a></td>
+	<td class="name" nowrap><a href="#Ioctx:read">Ioctx:read&nbsp;(oid, length, offset)</a></td>
 	<td class="summary">Read data from an object.</td>
 	</tr>
 </table>
@@ -269,19 +269,17 @@
 </dd>
     <dt>
     <a name = "Ioctx:write"></a>
-    <strong>Ioctx:write&nbsp;(object, buffer, length, offset)</strong>
+    <strong>Ioctx:write&nbsp;(oid, buf, length, offset)</strong>
     </dt>
     <dd>
     Write data to an object. 
 
     <h3>Parameters:</h3>
     <ul>
-       <li><code><em>object</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  name</li>
-       <li><code><em>buffer</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  containing bytes</li>
-       <li><code><em>length</em></code>: <strong>int</strong> 
-</li>
-       <li><code><em>offset</em></code>: <strong>int</strong> 
-</li>
+       <li><code><em>oid</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  object name</li>
+       <li><code><em>buf</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  buffer containing bytes</li>
+       <li><code><em>length</em></code>: <strong>int</strong>  number of bytes to write</li>
+       <li><code><em>offset</em></code>: <strong>int</strong>  offset in object from which to write</li>
     </ul>
 
     <h3>Usage:</h3>
@@ -299,18 +297,16 @@
 </dd>
     <dt>
     <a name = "Ioctx:read"></a>
-    <strong>Ioctx:read&nbsp;(object, length, offset)</strong>
+    <strong>Ioctx:read&nbsp;(oid, length, offset)</strong>
     </dt>
     <dd>
     Read data from an object. 
 
     <h3>Parameters:</h3>
     <ul>
-       <li><code><em>object</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  name</li>
-       <li><code><em>length</em></code>: <strong>int</strong> 
-</li>
-       <li><code><em>offset</em></code>: <strong>int</strong> 
-</li>
+       <li><code><em>oid</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  object name</li>
+       <li><code><em>length</em></code>: <strong>int</strong>  number of bytes read</li>
+       <li><code><em>offset</em></code>: <strong>int</strong>  offset in object from which to read</li>
     </ul>
 
     <h3>Usage:</h3>
