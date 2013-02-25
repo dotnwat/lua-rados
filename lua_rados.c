@@ -269,8 +269,8 @@ static int lrad_ioctx_close(lua_State *L)
 Get object stat info (size/mtime)
 @function stat 
 @string oid object name
-@returns len, mtime, or nil on failure
-@returns errstr and retval if failed
+@return len, mtime, or nil on failure
+@return errstr and retval if failed
 @usage size, mtime = ioctx:stat('obj3')
 */
 static int lrad_ioctx_stat(lua_State *L)
