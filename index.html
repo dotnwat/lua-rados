@@ -31,6 +31,7 @@
 <ul>
 <li><a href="#Functions">Functions</a></li>
 <li><a href="#Class_Cluster">Class Cluster</a></li>
+<li><a href="#Class_Ioctx">Class Ioctx</a></li>
 </ul>
 
 
@@ -74,6 +75,25 @@
 	<tr>
 	<td class="name" nowrap><a href="#Cluster:shutdown">Cluster:shutdown&nbsp;()</a></td>
 	<td class="summary">Disconnect from the cluster.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Cluster:open_ioctx">Cluster:open_ioctx&nbsp;(name)</a></td>
+	<td class="summary">Create an I/O context.</td>
+	</tr>
+</table>
+<h2><a href="#Class_Ioctx">Class Ioctx</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Ioctx:close">Ioctx:close&nbsp;()</a></td>
+	<td class="summary">Close the I/O context.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Ioctx:write">Ioctx:write&nbsp;(object, buffer, length, offset)</a></td>
+	<td class="summary">Write data to an object.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Ioctx:read">Ioctx:read&nbsp;(object, length, offset)</a></td>
+	<td class="summary">Read data from an object.</td>
 	</tr>
 </table>
 
@@ -198,6 +218,111 @@
         <pre class="example">cluster:shutdown()</pre>
     </ul>
 
+
+
+</dd>
+    <dt>
+    <a name = "Cluster:open_ioctx"></a>
+    <strong>Cluster:open_ioctx&nbsp;(name)</strong>
+    </dt>
+    <dd>
+    Create an I/O context. 
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>name</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  of pool</li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">ioctx = cluster:open_ioctx('my_pool')</pre>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>I/O context object or nil on failure</li>
+        <li>errstr, ret if failed</li>
+    </ol>
+
+
+</dd>
+</dl>
+    <h2><a name="Class_Ioctx"></a>Class Ioctx</h2>
+    
+
+    <dl class="function">
+    <dt>
+    <a name = "Ioctx:close"></a>
+    <strong>Ioctx:close&nbsp;()</strong>
+    </dt>
+    <dd>
+    Close the I/O context. 
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">ioctx:close()</pre>
+    </ul>
+
+
+
+</dd>
+    <dt>
+    <a name = "Ioctx:write"></a>
+    <strong>Ioctx:write&nbsp;(object, buffer, length, offset)</strong>
+    </dt>
+    <dd>
+    Write data to an object. 
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>object</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  name</li>
+       <li><code><em>buffer</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  containing bytes</li>
+       <li><code><em>length</em></code>: <strong>int</strong> 
+</li>
+       <li><code><em>offset</em></code>: <strong>int</strong> 
+</li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">ioctx:write('obj3', 'data', #'data', 0)</pre>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>number of bytes written, or nil on error</li>
+        <li>errstr and retval if failed</li>
+    </ol>
+
+
+</dd>
+    <dt>
+    <a name = "Ioctx:read"></a>
+    <strong>Ioctx:read&nbsp;(object, length, offset)</strong>
+    </dt>
+    <dd>
+    Read data from an object. 
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>object</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  name</li>
+       <li><code><em>length</em></code>: <strong>int</strong> 
+</li>
+       <li><code><em>offset</em></code>: <strong>int</strong> 
+</li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">data = ioctx:read('obj3', 1000, 0)</pre>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>string with at most <code>length</code> bytes, or nil on error</li>
+        <li>errstr and retval if failed</li>
+    </ol>
 
 
 </dd>
