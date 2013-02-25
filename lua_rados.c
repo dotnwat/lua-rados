@@ -268,10 +268,10 @@ static int lrad_ioctx_close(lua_State *L)
 /**
 Write data to an object.
 @function write
-@string object name
-@string buffer containing bytes
-@int length
-@int offset
+@string oid object name
+@string buf buffer containing bytes
+@int length number of bytes to write
+@int offset offset in object from which to write
 @return number of bytes written, or nil on error
 @return errstr and retval if failed
 @usage ioctx:write('obj3', 'data', #'data', 0)
@@ -293,9 +293,9 @@ static int lrad_ioctx_write(lua_State *L)
 /**
 Read data from an object.
 @function read
-@string object name
-@int length
-@int offset
+@string oid object name
+@int length number of bytes read
+@int offset offset in object from which to read
 @return string with at most `length` bytes, or nil on error
 @return errstr and retval if failed
 @usage data = ioctx:read('obj3', 1000, 0)
