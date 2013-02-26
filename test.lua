@@ -121,6 +121,13 @@ describe("ioctx object", function()
     ioctx = cluster:open_ioctx('data')
   end)
 
+  it("is usable if cluster ref disappears", function()
+    cluster = nil
+    collectgarbage()
+    local data = 'wkjeflkwjelfkjwelfkjwef'
+    assert.is_equal(#data, ioctx:write('oid', data, #data, 0))
+  end)
+
   describe("write method", function()
     it("returns number of bytes written", function()
       local data = 'wkjeflkwjelfkjwelfkjwef'

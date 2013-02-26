@@ -19,6 +19,8 @@ using librados::IoCtx;
 #define LRAD_TIOCTX_T "Rados.IoctxT"
 #define LRAD_BL_T "Rados.Bufferlist"
 
+static char reg_key_rados_refs;
+
 typedef enum {
   CREATED,
   CONNECTED,
@@ -267,6 +269,16 @@ static int lrad_open_ioctx(lua_State *L)
   if (ret)
     return lrad_pusherror(L, ret);
 
+  /* record IoCtx -> Rados reference in weak key table */
+  lua_pushlightuserdata(L, &reg_key_rados_refs);
+  lua_gettable(L, LUA_REGISTRYINDEX);
+  assert(!lua_isnil(L, -1));
+  assert(lua_type(L, -1) == LUA_TTABLE);
+  lua_pushvalue(L, -2); /* key = ioctx */
+  lua_pushvalue(L, 1);  /* value = cluster */
+  lua_settable(L, -3);
+  lua_pop(L, 1);
+
   /* return the userdata */
   return 1;
 }
@@ -434,6 +446,15 @@ LUALIB_API int luaopen_rados(lua_State *L)
   lua_pushcfunction(L, lrad_bl_gc);
   lua_setfield(L, -2, "__gc");
   lua_pop(L, 1);
+
+  /* weak table to protect IoCtx -> Rados refs */
+  lua_pushlightuserdata(L, &reg_key_rados_refs);
+  lua_newtable(L);
+  lua_pushstring(L, "k");
+  lua_setfield(L, -2, "__mode");
+  lua_pushvalue(L, -1);
+  lua_setmetatable(L, -2);
+  lua_settable(L, LUA_REGISTRYINDEX);
 
   luaL_register(L, "rados", radoslib_f);
 
