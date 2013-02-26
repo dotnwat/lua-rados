@@ -1,6 +1,6 @@
 /**
-  @module lua-rados
-  */
+@module lua-rados
+*/
 #include <errno.h>
 
 extern "C" {
@@ -73,6 +73,9 @@ static inline IoCtx *lrad_checkioctx(lua_State *L, int pos)
   return (IoCtx *)luaL_checkudata(L, pos, LRAD_TIOCTX_T);
 }
 
+/*
+ * Push nil-error protocol values
+ */
 static int lrad_pusherror(lua_State *L, int ret)
 {
   lua_pushnil(L);
@@ -81,6 +84,9 @@ static int lrad_pusherror(lua_State *L, int ret)
   return 3;
 }
 
+/*
+ * Push return value or error if not ok
+ */
 static int lrad_pushresult(lua_State *L, int ok, int ret)
 {
   if (!ok)
@@ -321,7 +327,7 @@ static int lrad_ioctx_stat(lua_State *L)
 
   lua_pushinteger(L, len);
   lua_pushinteger(L, mtime);
-  /* return the userdata */
+
   return 2;
 }
 
