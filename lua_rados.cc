@@ -9,10 +9,15 @@ extern "C" {
 #include <lauxlib.h>
 }
 
-#include <rados/librados.h>
+#include <rados/librados.hpp>
+
+using librados::bufferlist;
+using librados::Rados;
+using librados::IoCtx;
 
 #define LRAD_TRADOS_T "Rados.RadosT"
 #define LRAD_TIOCTX_T "Rados.IoctxT"
+#define LRAD_BL_T "Rados.Bufferlist"
 
 typedef enum {
 	CREATED,
@@ -21,7 +26,7 @@ typedef enum {
 } cluster_state_t;
 
 struct lrad_cluster {
-	rados_t cluster;
+  Rados rados;
 	cluster_state_t state;
 };
 
@@ -63,9 +68,9 @@ static inline struct lrad_cluster *lrad_checkcluster_conn(lua_State *L, int pos)
 /*
  * Get Ioctx object.
  */
-static inline rados_ioctx_t *lrad_checkioctx(lua_State *L, int pos)
+static inline IoCtx *lrad_checkioctx(lua_State *L, int pos)
 {
-	return (rados_ioctx_t *)luaL_checkudata(L, pos, LRAD_TIOCTX_T);
+	return (IoCtx *)luaL_checkudata(L, pos, LRAD_TIOCTX_T);
 }
 
 static int lrad_pusherror(lua_State *L, int ret)
@@ -82,6 +87,32 @@ static int lrad_pushresult(lua_State *L, int ok, int ret)
 		return lrad_pusherror(L, ret);
 	lua_pushinteger(L, ret);
 	return 1;
+}
+
+/*
+ * Garbage collect a bufferlist in the heap
+ */
+static int lrad_bl_gc(lua_State *L)
+{
+  bufferlist **pbl = (bufferlist **)luaL_checkudata(L, 1, LRAD_BL_T);
+  if (pbl && *pbl)
+    delete *pbl;
+  return 0;
+}
+
+/*
+ * Allocate a new bufferlist in the heap
+ */
+static bufferlist *lrad_newbufferlist(lua_State *L)
+{
+  bufferlist *bl = new bufferlist();
+  bufferlist **pbl = (bufferlist **)lua_newuserdata(L, sizeof(*pbl));
+  *pbl = bl;
+
+  luaL_getmetatable(L, LRAD_BL_T);
+  lua_setmetatable(L, -2);
+
+  return bl;
 }
 
 /**
@@ -131,7 +162,7 @@ static int lrad_create(lua_State *L)
 	luaL_getmetatable(L, LRAD_TRADOS_T);
 	lua_setmetatable(L, -2);
 
-	ret = rados_create(&cluster->cluster, id);
+  ret = cluster->rados.init(id);
 	if (ret)
 		return lrad_pusherror(L, ret);
 
@@ -163,7 +194,7 @@ static int lrad_conf_read_file(lua_State *L)
 		conf_file = lua_tostring(L, 2);
 	}
 
-	ret = rados_conf_read_file(cluster->cluster, conf_file);
+  ret = cluster->rados.conf_read_file(conf_file);
 
 	return lrad_pushresult(L, (ret == 0), ret);
 }
@@ -184,7 +215,7 @@ static int lrad_connect(lua_State *L)
 	if (cluster->state == CONNECTED)
 		luaL_argerror(L, 1, "already connected to cluster");
 
-	ret = rados_connect(cluster->cluster);
+  ret = cluster->rados.connect();
 	if (!ret)
 		cluster->state = CONNECTED;
 
@@ -200,7 +231,7 @@ static int lrad_shutdown(lua_State *L)
 {
 	struct lrad_cluster *cluster = lrad_checkcluster_conn(L, 1);
 
-	rados_shutdown(cluster->cluster);
+  cluster->rados.shutdown();
 
 	cluster->state = SHUTDOWN;
 
@@ -219,14 +250,14 @@ static int lrad_open_ioctx(lua_State *L)
 {
 	struct lrad_cluster *cluster = lrad_checkcluster_conn(L, 1);
 	const char *pool_name = luaL_checkstring(L, 2);
-	rados_ioctx_t *ioctx;
+	IoCtx *ioctx;
 	int ret;
 
-	ioctx = (rados_ioctx_t *)lua_newuserdata(L, sizeof(*ioctx));
+	ioctx = (IoCtx *)lua_newuserdata(L, sizeof(*ioctx));
 	luaL_getmetatable(L, LRAD_TIOCTX_T);
 	lua_setmetatable(L, -2);
 
-	ret = rados_ioctx_create(cluster->cluster, pool_name, ioctx);
+  ret = cluster->rados.ioctx_create(pool_name, *ioctx);
 	if (ret)
 		return lrad_pusherror(L, ret);
 
@@ -242,7 +273,7 @@ static int lrad_cluster_gc(lua_State *L)
 	struct lrad_cluster *cluster = __lrad_checkcluster(L, 1);
 
 	if (cluster->state == CONNECTED)
-		rados_shutdown(cluster->cluster);
+    cluster->rados.shutdown();
 
 	cluster->state = SHUTDOWN;
 
@@ -260,9 +291,9 @@ Close the I/O context.
 */
 static int lrad_ioctx_close(lua_State *L)
 {
-	rados_ioctx_t *ioctx = lrad_checkioctx(L, 1);
+	IoCtx *ioctx = lrad_checkioctx(L, 1);
 
-	rados_ioctx_destroy(*ioctx);
+  ioctx->close();
 
 	return 0;
 }
@@ -277,13 +308,13 @@ Get object stat info (size/mtime)
 */
 static int lrad_ioctx_stat(lua_State *L)
 {
-	rados_ioctx_t *ioctx = lrad_checkioctx(L, 1);
+	IoCtx *ioctx = lrad_checkioctx(L, 1);
 	const char *oid = luaL_checkstring(L, 2);
 	uint64_t len;
 	time_t mtime;
 	int ret;
 
-	ret = rados_stat(*ioctx, oid, &len, &mtime);
+  ret = ioctx->stat(oid, &len, &mtime);
 
 	if (ret)
 		return lrad_pusherror(L, ret);
@@ -307,14 +338,17 @@ Write data to an object.
 */
 static int lrad_ioctx_write(lua_State *L)
 {
-	rados_ioctx_t *ioctx = lrad_checkioctx(L, 1);
+	IoCtx *ioctx = lrad_checkioctx(L, 1);
 	const char *oid = luaL_checkstring(L, 2);
 	const char *buf = luaL_checkstring(L, 3);
 	size_t len = luaL_checkint(L, 4);
 	uint64_t off = luaL_checkint(L, 5);
+  bufferlist *bl = lrad_newbufferlist(L);
 	int ret;
 
-	ret = rados_write(*ioctx, oid, buf, len, off);
+  bl->append(buf, len);
+
+  ret = ioctx->write(oid, *bl, len, off);
 
 	return lrad_pushresult(L, (ret >= 0), ret);
 }
@@ -331,26 +365,21 @@ Read data from an object.
 */
 static int lrad_ioctx_read(lua_State *L)
 {
-	rados_ioctx_t *ioctx = lrad_checkioctx(L, 1);
+	IoCtx *ioctx = lrad_checkioctx(L, 1);
 	const char *oid = luaL_checkstring(L, 2);
 	size_t len = luaL_checkint(L, 3);
 	uint64_t off = luaL_checkint(L, 4);
-	void *ud;
-  char *buf;
-	lua_Alloc lalloc = lua_getallocf(L, &ud);
+  bufferlist *bl = lrad_newbufferlist(L);
 	int ret;
 
-	buf = (char *)lalloc(ud, NULL, 0, len);
-	if (!buf && len > 0)
-		return lrad_pusherror(L, -ENOMEM);
-
-	ret = rados_read(*ioctx, oid, buf, len, off);
+  ret = ioctx->read(oid, *bl, len, off);
 	if (ret < 0)
 		return lrad_pusherror(L, ret);
 
-	lua_pushlstring(L, buf, ret);
+  if (bl->length() > len)
+    return lrad_pusherror(L, -ERANGE);
 
-	lalloc(ud, buf, 0, 0);
+	lua_pushlstring(L, bl->c_str(), bl->length());
 
 	return 1;
 }
@@ -393,6 +422,12 @@ LUALIB_API int luaopen_rados(lua_State *L)
 	lua_setfield(L, -2, "__index");
 	luaL_register(L, NULL, ioctxlib_m);
 	lua_pop(L, 1);
+
+  /* setup bufferlist userdata type */
+  luaL_newmetatable(L, LRAD_BL_T);
+  lua_pushcfunction(L, lrad_bl_gc);
+  lua_setfield(L, -2, "__gc");
+  lua_pop(L, 1);
 
 	luaL_register(L, "rados", radoslib_f);
 
