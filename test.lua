@@ -152,5 +152,24 @@ describe("ioctx object", function()
       assert.is_equal(#data, length)
     end)
   end)
+	
+  describe("setxattr method", function()
+    it("returns number of bytes written to xattr", function()
+      local data = 'wkjeflkwjelfkjwelfkjwef'
+      local name = 'xattrset'
+      local length
+      length = ioctx:setxattr('oid', name, data, #data)
+      assert.is_equal(0, length)
+    end)
+  end)
+
+  describe("getxattr method", function()
+    it("will read xattr", function()
+      local data = 'wkjeflkwjelfkjwelfkjwef'
+      local name = 'xattrget'
+      ioctx:setxattr('oid', name, data, #data)
+      assert.is_equal(data, ioctx:getxattr('oid',name))
+    end)
+  end)
 
 end)
