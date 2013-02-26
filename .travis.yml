@@ -21,3 +21,10 @@ install:
   - make
 
 script: "exit 0"
+
+notifications:
+  recipients:
+    - noahwatkins@gmail.com
+  email:
+    on_success: always
+    on_failure: always
