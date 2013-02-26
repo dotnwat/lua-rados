@@ -402,6 +402,69 @@ static int lrad_ioctx_read(lua_State *L)
   return 1;
 }
 
+/**
+Set xattr name on object
+@function setxattr
+@string oid object name
+@string name xattr name
+@string buf value to set xattr name to
+@int size of buf
+@return 0 on success, or nil on error
+@return errstr and retval if failed
+@usage ioctx:setxattr('obj3', 'name', 'data', #'data')
+*/
+
+static int lrad_ioctx_setxattr(lua_State *L)
+{
+  IoCtx *ioctx = lrad_checkioctx(L, 1);
+  const char *oid = luaL_checkstring(L, 2);
+  const char *name = luaL_checkstring(L, 3);
+  size_t buflen, len = luaL_checkint(L, 5);
+  const char* buf = lua_tolstring(L, 4, &buflen);
+  bufferlist *bl = lrad_newbufferlist(L);
+  int ret;
+
+  if( !buf ){
+    return luaL_argerror(L, 4, "expected string");
+  }
+
+  luaL_argcheck(L, len >= 0, 5, "invalid length");
+  luaL_argcheck(L, buflen >= len, 5, "length longer than buffer");
+
+  bl->append(buf, len);
+
+  ret = ioctx->setxattr(oid, name, *bl);
+
+  return lrad_pushresult(L, (ret >= 0), ret);
+}
+
+/**
+Get xattr name from object.
+@function getxattr
+@string oid object name
+@string name xattr name
+@return string containing xattr name
+@return errstr and retval if failed
+@usage data = ioctx:getxattr('obj3', 'name')
+*/
+static int lrad_ioctx_getxattr(lua_State *L)
+{
+  IoCtx *ioctx = lrad_checkioctx(L, 1);
+  const char *oid = luaL_checkstring(L, 2);
+  const char *name = luaL_checkstring(L, 3);
+  bufferlist *bl = lrad_newbufferlist(L);
+  int ret;
+
+  ret = ioctx->getxattr(oid, name, *bl );
+  if (ret < 0)
+    return lrad_pusherror(L, ret);
+
+  lua_pushlstring(L, bl->c_str(), bl->length());
+
+  return 1;
+}
+
+
 static const luaL_Reg clusterlib_m[] = {
   {"conf_read_file", lrad_conf_read_file},
   {"connect", lrad_connect},
@@ -416,6 +479,8 @@ static const luaL_Reg ioctxlib_m[] = {
   {"write", lrad_ioctx_write},
   {"read", lrad_ioctx_read},
   {"stat", lrad_ioctx_stat},
+  {"setxattr", lrad_ioctx_setxattr},
+  {"getxattr", lrad_ioctx_getxattr},
   {NULL, NULL}
 };
 
