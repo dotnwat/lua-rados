@@ -466,6 +466,7 @@ static int lrad_ioctx_getxattr(lua_State *L)
 
 /**
 Execute an OSD class method on an object.
+@function exec
 @string oid the name of the object
 @string class the name of the class
 @string method the name of the method
