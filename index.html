@@ -99,6 +99,14 @@
 	<td class="name" nowrap><a href="#Ioctx:read">Ioctx:read&nbsp;(oid, length, offset)</a></td>
 	<td class="summary">Read data from an object.</td>
 	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Ioctx:setxattr">Ioctx:setxattr&nbsp;(oid, name, buf, size)</a></td>
+	<td class="summary">Set xattr name on object</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Ioctx:getxattr">Ioctx:getxattr&nbsp;(oid, name)</a></td>
+	<td class="summary">Get xattr name from object.</td>
+	</tr>
 </table>
 
 <br/>
@@ -346,6 +354,60 @@
     <h3>Returns:</h3>
     <ol>
         <li>string with at most <code>length</code> bytes, or nil on error</li>
+        <li>errstr and retval if failed</li>
+    </ol>
+
+
+</dd>
+    <dt>
+    <a name = "Ioctx:setxattr"></a>
+    <strong>Ioctx:setxattr&nbsp;(oid, name, buf, size)</strong>
+    </dt>
+    <dd>
+    Set xattr name on object 
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>oid</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  object name</li>
+       <li><code><em>name</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  xattr name</li>
+       <li><code><em>buf</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  value to set xattr name to</li>
+       <li><code><em>size</em></code>: <strong>int</strong>  of buf</li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">ioctx:setxattr('obj3', 'name', 'data', #'data')</pre>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>0 on success, or nil on error</li>
+        <li>errstr and retval if failed</li>
+    </ol>
+
+
+</dd>
+    <dt>
+    <a name = "Ioctx:getxattr"></a>
+    <strong>Ioctx:getxattr&nbsp;(oid, name)</strong>
+    </dt>
+    <dd>
+    Get xattr name from object. 
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>oid</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  object name</li>
+       <li><code><em>name</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  xattr name</li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">data = ioctx:getxattr('obj3', 'name')</pre>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>string containing xattr name</li>
         <li>errstr and retval if failed</li>
     </ol>
 
