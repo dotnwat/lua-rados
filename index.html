@@ -107,6 +107,10 @@
 	<td class="name" nowrap><a href="#Ioctx:getxattr">Ioctx:getxattr&nbsp;(oid, name)</a></td>
 	<td class="summary">Get xattr name from object.</td>
 	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Ioctx:exec">Ioctx:exec&nbsp;(oid, class, method, buf, length)</a></td>
+	<td class="summary">Execute an OSD class method on an object.</td>
+	</tr>
 </table>
 
 <br/>
@@ -409,6 +413,35 @@
     <ol>
         <li>string containing xattr name</li>
         <li>errstr and retval if failed</li>
+    </ol>
+
+
+</dd>
+    <dt>
+    <a name = "Ioctx:exec"></a>
+    <strong>Ioctx:exec&nbsp;(oid, class, method, buf, length)</strong>
+    </dt>
+    <dd>
+    Execute an OSD class method on an object. 
+
+    <h3>Parameters:</h3>
+    <ul>
+       <li><code><em>oid</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  the name of the object</li>
+       <li><code><em>class</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  the name of the class</li>
+       <li><code><em>method</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  the name of the method</li>
+       <li><code><em>buf</em></code>: <a href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>  buffer containing method input</li>
+       <li><code><em>length</em></code>: <strong>int</strong>  length of input buffer</li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">ret, reply = ioctx:exec('oid', 'cls', 'func', input, #input)</pre>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>retval, output on success, else nil</li>
+        <li>strerr, errval on failure</li>
     </ol>
 
 
