@@ -154,6 +154,49 @@ describe("ioctx object", function()
   end)
 
   describe("setxattr method", function()
+    it("throws error with non-string object name", function()
+      assert.error(function()
+        ioctx:setxattr({}, 'name', 'data', #'data')
+      end)
+      assert.error(function()
+        ioctx:setxattr(nil, 'name', 'data', #'data')
+      end)
+    end)
+
+    it("throws error with non-string xattr name", function()
+      assert.error(function()
+        ioctx:setxattr('oid', {}, 'data', #'data')
+      end)
+      assert.error(function()
+        ioctx:setxattr('oid', nil, 'data', #'data')
+      end)
+    end)
+
+    it("throws error with non-string buffer", function()
+      assert.error(function()
+        ioctx:setxattr('oid', 'name', {}, 0)
+      end)
+    end)
+
+    it("throws error with nil buffer", function()
+      assert.error(function()
+        ioctx:setxattr('oid', 'name', nil, 0)
+      end)
+    end)
+
+    it("throws error if length is negative", function()
+      assert.error(function()
+        ioctx:setxattr('oid', 'name', 'data', -1)
+      end)
+    end)
+
+    it("throws error if length is larger than buffer", function()
+      assert.error(function()
+        local data = 'data'
+        ioctx:setxattr('oid', 'name', data, #data+1)
+      end)
+    end)
+
     it("returns number of bytes written to xattr", function()
       local data = 'wkjeflkwjelfkjwelfkjwef'
       local name = 'xattrset'
@@ -164,6 +207,24 @@ describe("ioctx object", function()
   end)
 
   describe("getxattr method", function()
+    it("throws error with non-string object name", function()
+      assert.error(function()
+        ioctx:getxattr({}, 'name', 'data', #'data')
+      end)
+      assert.error(function()
+        ioctx:getxattr(nil, 'name', 'data', #'data')
+      end)
+    end)
+
+    it("throws error with non-string xattr name", function()
+      assert.error(function()
+        ioctx:getxattr('oid', {}, 'data', #'data')
+      end)
+      assert.error(function()
+        ioctx:getxattr('oid', nil, 'data', #'data')
+      end)
+    end)
+
     it("will read xattr", function()
       local data = 'wkjeflkwjelfkjwelfkjwef'
       local name = 'xattrget'
