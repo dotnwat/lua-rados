@@ -413,7 +413,6 @@ Set xattr name on object
 @return errstr and retval if failed
 @usage ioctx:setxattr('obj3', 'name', 'data', #'data')
 */
-
 static int lrad_ioctx_setxattr(lua_State *L)
 {
   IoCtx *ioctx = lrad_checkioctx(L, 1);
@@ -465,6 +464,50 @@ static int lrad_ioctx_getxattr(lua_State *L)
 }
 
 
+/**
+Execute an OSD class method on an object.
+@string oid the name of the object
+@string class the name of the class
+@string method the name of the method
+@string buf buffer containing method input
+@int length length of input buffer
+@return retval, output on success, else nil
+@return strerr, errval on failure
+@usage ret, reply = ioctx:exec('oid', 'cls', 'func', input, #input)
+*/
+static int lrad_ioctx_exec(lua_State *L)
+{
+  IoCtx *ioctx = lrad_checkioctx(L, 1);
+  const char *oid = luaL_checkstring(L, 2);
+  const char *cls = luaL_checkstring(L, 3);
+  const char *method = luaL_checkstring(L, 4);
+  size_t buflen, len = luaL_checkint(L, 6);
+  const char *buf = lua_tolstring(L, 5, &buflen);
+  bufferlist inbl, *outbl = lrad_newbufferlist(L);
+  int ret;
+
+  if (!buf) {
+    if (lua_type(L, 5) != LUA_TNIL)
+      return luaL_argerror(L, 5, "expected string or nil");
+    buflen = 0;
+  }
+
+  luaL_argcheck(L, len >= 0, 6, "invalid length");
+  luaL_argcheck(L, buflen >= len, 6, "length longer than buffer");
+
+  if (buf)
+    inbl.append(buf, len);
+
+  ret = ioctx->exec(oid, cls, method, inbl, *outbl);
+  if (ret < 0)
+    return lrad_pusherror(L, ret);
+
+  lua_pushinteger(L, ret);
+  lua_pushlstring(L, outbl->c_str(), outbl->length());
+
+  return 2;
+}
+
 static const luaL_Reg clusterlib_m[] = {
   {"conf_read_file", lrad_conf_read_file},
   {"connect", lrad_connect},
@@ -481,6 +524,7 @@ static const luaL_Reg ioctxlib_m[] = {
   {"stat", lrad_ioctx_stat},
   {"setxattr", lrad_ioctx_setxattr},
   {"getxattr", lrad_ioctx_getxattr},
+  {"exec", lrad_ioctx_exec},
   {NULL, NULL}
 };
 
