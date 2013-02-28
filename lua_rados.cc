@@ -11,13 +11,14 @@ extern "C" {
 
 #include <rados/librados.hpp>
 
+#include "common.h"
+
 using librados::bufferlist;
 using librados::Rados;
 using librados::IoCtx;
 
 #define LRAD_TRADOS_T "Rados.RadosT"
 #define LRAD_TIOCTX_T "Rados.IoctxT"
-#define LRAD_BL_T "Rados.Bufferlist"
 
 static char reg_key_rados_refs;
 
@@ -95,32 +96,6 @@ static int lrad_pushresult(lua_State *L, int ok, int ret)
     return lrad_pusherror(L, ret);
   lua_pushinteger(L, ret);
   return 1;
-}
-
-/*
- * Garbage collect a bufferlist in the heap
- */
-static int lrad_bl_gc(lua_State *L)
-{
-  bufferlist **pbl = (bufferlist **)luaL_checkudata(L, 1, LRAD_BL_T);
-  if (pbl && *pbl)
-    delete *pbl;
-  return 0;
-}
-
-/*
- * Allocate a new bufferlist in the heap
- */
-static bufferlist *lrad_newbufferlist(lua_State *L)
-{
-  bufferlist *bl = new bufferlist();
-  bufferlist **pbl = (bufferlist **)lua_newuserdata(L, sizeof(*pbl));
-  *pbl = bl;
-
-  luaL_getmetatable(L, LRAD_BL_T);
-  lua_setmetatable(L, -2);
-
-  return bl;
 }
 
 /**
@@ -549,12 +524,6 @@ LUALIB_API int luaopen_rados(lua_State *L)
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
   luaL_register(L, NULL, ioctxlib_m);
-  lua_pop(L, 1);
-
-  /* setup bufferlist userdata type */
-  luaL_newmetatable(L, LRAD_BL_T);
-  lua_pushcfunction(L, lrad_bl_gc);
-  lua_setfield(L, -2, "__gc");
   lua_pop(L, 1);
 
   /* weak table to protect IoCtx -> Rados refs */
