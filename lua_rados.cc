@@ -69,14 +69,6 @@ static inline struct lrad_cluster *lrad_checkcluster_conn(lua_State *L, int pos)
 }
 
 /*
- * Get Ioctx object.
- */
-static inline IoCtx *lrad_checkioctx(lua_State *L, int pos)
-{
-  return (IoCtx *)luaL_checkudata(L, pos, LRAD_TIOCTX_T);
-}
-
-/*
  * Push nil-error protocol values
  */
 static int lrad_pusherror(lua_State *L, int ret)
