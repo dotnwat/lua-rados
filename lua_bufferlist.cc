@@ -22,23 +22,29 @@ static int bl_gc(lua_State *L)
   return 0;
 }
 
+static const luaL_Reg bllib_m[] = {
+  {"__gc", bl_gc},
+  {NULL, NULL}
+};
+
 /*
  * Allocate a new bufferlist in the heap
  */
 bufferlist *lrad_newbufferlist(lua_State *L)
 {
   if (luaL_newmetatable(L, LRAD_BL_T)) {
-    lua_pushcfunction(L, bl_gc);
-    lua_setfield(L, -2, "__gc");
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -2, "__index");
+    luaL_register(L, NULL, bllib_m);
+    lua_pop(L, 1);
   }
 
   bufferlist *bl = new bufferlist();
   bufferlist **pbl = (bufferlist **)lua_newuserdata(L, sizeof(*pbl));
   *pbl = bl;
 
-  lua_pushvalue(L, 1); /* copy metatable */
+  luaL_getmetatable(L, LRAD_BL_T);
   lua_setmetatable(L, -2);
-  lua_remove(L, 1); /* remove orig metatable */
 
   return bl;
 }

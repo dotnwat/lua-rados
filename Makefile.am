@@ -1,12 +1,17 @@
 ACLOCAL_AMFLAGS = -I m4
 
-rados_la_SOURCES = lua_rados.cc lua_bufferlist.cc
-rados_la_CXXFLAGS = $(LUA_INCLUDE) -Wall
-rados_la_LDFLAGS = -module -avoid-version
-lib_LTLIBRARIES = rados.la
+liblua_bl_la_SOURCES = lua_bufferlist.cc
+liblua_bl_la_CXXFLAGS = $(LUA_INCLUDE) -Wall -g
+lib_LTLIBRARIES = liblua_bl.la
 
-clslua_la_SOURCES = lua_clslua.cc lua_bufferlist.cc
-clslua_la_CXXFLAGS = $(LUA_INCLUDE) -Wall
+rados_la_SOURCES = lua_rados.cc
+rados_la_CXXFLAGS = $(LUA_INCLUDE) -Wall -g
+rados_la_LDFLAGS = -module -avoid-version
+rados_la_LIBADD = liblua_bl.la
+lib_LTLIBRARIES += rados.la
+
+clslua_la_SOURCES = lua_clslua.cc
+clslua_la_CXXFLAGS = $(LUA_INCLUDE) -Wall -g
 clslua_la_LDFLAGS = -module -avoid-version
-clslua_la_LIBADD = -lcls_lua_client
+clslua_la_LIBADD = -lcls_lua_client liblua_bl.la
 lib_LTLIBRARIES += clslua.la
