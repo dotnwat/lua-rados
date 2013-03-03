@@ -44,6 +44,8 @@ static int clslua_exec(lua_State *L)
 
   ret = cls_lua_client::exec(*ioctx, oid, script, handler, *inbl, *outbl, NULL);
   if (ret < 0) {
+    inbl->clear();
+    outbl->clear();
     lua_pushnil(L);
     lua_pushfstring(L, "%s", strerror(ret));
     lua_pushinteger(L, ret);
@@ -52,6 +54,10 @@ static int clslua_exec(lua_State *L)
 
   lua_pushinteger(L, ret);
   lua_pushlstring(L, outbl->c_str(), outbl->length());
+
+  inbl->clear();
+  outbl->clear();
+
   return 2;
 }
 
