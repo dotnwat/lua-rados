@@ -335,6 +335,8 @@ static int lrad_ioctx_write(lua_State *L)
 
   ret = ioctx->write(oid, *bl, len, off);
 
+  bl->clear();
+
   return lrad_pushresult(L, (ret >= 0), ret);
 }
 
@@ -365,6 +367,8 @@ static int lrad_ioctx_read(lua_State *L)
     return lrad_pusherror(L, -ERANGE);
 
   lua_pushlstring(L, bl->c_str(), bl->length());
+
+  bl->clear();
 
   return 1;
 }
@@ -401,6 +405,8 @@ static int lrad_ioctx_setxattr(lua_State *L)
 
   ret = ioctx->setxattr(oid, name, *bl);
 
+  bl->clear();
+
   return lrad_pushresult(L, (ret >= 0), ret);
 }
 
@@ -427,6 +433,8 @@ static int lrad_ioctx_getxattr(lua_State *L)
 
   lua_pushlstring(L, bl->c_str(), bl->length());
 
+  bl->clear();
+
   return 1;
 }
 
@@ -451,7 +459,8 @@ static int lrad_ioctx_exec(lua_State *L)
   const char *method = luaL_checkstring(L, 4);
   size_t buflen, len = luaL_checkint(L, 6);
   const char *buf = lua_tolstring(L, 5, &buflen);
-  bufferlist inbl, *outbl = lrad_newbufferlist(L);
+  bufferlist *inbl = lrad_newbufferlist(L);
+  bufferlist *outbl = lrad_newbufferlist(L);
   int ret;
 
   if (!buf) {
@@ -464,14 +473,20 @@ static int lrad_ioctx_exec(lua_State *L)
   luaL_argcheck(L, buflen >= len, 6, "length longer than buffer");
 
   if (buf)
-    inbl.append(buf, len);
+    inbl->append(buf, len);
 
-  ret = ioctx->exec(oid, cls, method, inbl, *outbl);
-  if (ret < 0)
+  ret = ioctx->exec(oid, cls, method, *inbl, *outbl);
+  if (ret < 0) {
+    inbl->clear();
+    outbl->clear();
     return lrad_pusherror(L, ret);
+  }
 
   lua_pushinteger(L, ret);
   lua_pushlstring(L, outbl->c_str(), outbl->length());
+
+  inbl->clear();
+  outbl->clear();
 
   return 2;
 }
