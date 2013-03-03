@@ -4,8 +4,8 @@ compiler:
   - g++
 
 branches:
-  only:
-    - master
+  except:
+    - gh-pages
 
 before_install:
   - wget -q -O- 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | sudo apt-key add -
