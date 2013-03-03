@@ -35,12 +35,16 @@ static int clslua_exec(lua_State *L)
   const char *oid = luaL_checkstring(L, 2);
   const char *script = luaL_checkstring(L, 3);
   const char *handler = luaL_checkstring(L, 4);
-  const char *input = luaL_checklstring(L, 5, &input_len);
+  const char *input = lua_tolstring(L, 5, &input_len);
   bufferlist *inbl = lrad_newbufferlist(L);
   bufferlist *outbl = lrad_newbufferlist(L);
   int ret;
 
-  inbl->append(input, input_len);
+  if (!input && lua_type(L, 5) != LUA_TNIL)
+    return luaL_argerror(L, 5, "expected string or nil");
+
+  if (input)
+    inbl->append(input, input_len);
 
   ret = cls_lua_client::exec(*ioctx, oid, script, handler, *inbl, *outbl, NULL);
   if (ret < 0) {
