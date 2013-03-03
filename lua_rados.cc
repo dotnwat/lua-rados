@@ -74,7 +74,7 @@ static inline struct lrad_cluster *lrad_checkcluster_conn(lua_State *L, int pos)
 static int lrad_pusherror(lua_State *L, int ret)
 {
   lua_pushnil(L);
-  lua_pushfstring(L, "%s", strerror(ret));
+  lua_pushfstring(L, "%s", strerror(-ret));
   lua_pushinteger(L, ret);
   return 3;
 }

@@ -51,7 +51,7 @@ static int clslua_exec(lua_State *L)
     inbl->clear();
     outbl->clear();
     lua_pushnil(L);
-    lua_pushfstring(L, "%s", strerror(ret));
+    lua_pushfstring(L, "%s", strerror(-ret));
     lua_pushinteger(L, ret);
     return 3;
   }
