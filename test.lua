@@ -197,7 +197,7 @@ describe("ioctx object", function()
       end)
     end)
 
-    it("returns number of bytes written to xattr", function()
+    it("returns zero on success", function()
       local data = 'wkjeflkwjelfkjwelfkjwef'
       local name = 'xattrset'
       local length
@@ -231,6 +231,55 @@ describe("ioctx object", function()
       ioctx:setxattr('oid', name, data, #data)
       assert.is_equal(data, ioctx:getxattr('oid',name))
     end)
+  end)  
+  
+  describe("omapset", function()
+		
+    it("throws error if second arg is not a table", function()
+      assert.error(function()
+        local kvpairs = "hello" 
+        local numpairs = 2 
+        ioctx:omapset('oid', kvpairs)
+      end)
+    end)
+    
+    it("throws error if table isnt strictly strings", function()
+      assert.error(function()
+        local kvpairs = { 1,2,3, key1 = "val1"}
+        local numpairs = 2 
+        ioctx:omapset('oid', kvpairs)
+      end)
+    end)
+
+    it("returns 0 on success", function()
+      local kvpairs = { key1 = "val1", key2 = "val2" }
+      local numpairs = 2 
+      assert.is_equal(0,ioctx:omapset('oid', kvpairs))
+    end)
+  end)
+
+  describe("omapget", function()
+    
+    it("returns 0 on success", function()
+      local kvpairs = { key1 = "val1", key2 = "val2" }
+      local numpairs = 2 
+      assert.is_equal(0,ioctx:omapset('oid', kvpairs))
+      local retpairs, retpairnum = ioctx:omapget('oid', "", numpairs)
+      assert.is_equal(numpairs, retpairnum)
+      assert.is_equal(kvpairs[key1], retpairs[key1])
+      assert.is_equal(kvpairs[key2], retpairs[key2])
+    end)
+  
+    it("returns only keys greater than arg2", function()
+      local kvpairs = { key1 = "val1", key2 = "val2" }
+      local numpairs = 2 
+      assert.is_equal(0,ioctx:omapset('oid', kvpairs))
+      local retpairs, retpairnum = ioctx:omapget('oid', "key1", numpairs)
+      assert.is_equal(numpairs -1 , retpairnum)
+      assert.is_equal(kvpairs[key2], retpairs[key1])
+    end)
+
+  
   end)
 
   describe("exec", function()

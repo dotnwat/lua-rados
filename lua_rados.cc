@@ -9,6 +9,8 @@ extern "C" {
 #include <lauxlib.h>
 }
 
+#include <string>
+#include <map>
 #include <rados/librados.hpp>
 
 using librados::bufferlist;
@@ -18,6 +20,9 @@ using librados::IoCtx;
 #define LRAD_TRADOS_T "Rados.RadosT"
 #define LRAD_TIOCTX_T "Rados.IoctxT"
 #define LRAD_BL_T "Rados.Bufferlist"
+#define LRAD_SBM_T "Rados.StrBLMap"
+
+typedef std::map<std::string, bufferlist> strblmap;
 
 static char reg_key_rados_refs;
 
@@ -121,6 +126,32 @@ static bufferlist *lrad_newbufferlist(lua_State *L)
   lua_setmetatable(L, -2);
 
   return bl;
+}
+
+/*
+ * Garbage collect a string buffer list map in the heap
+ */
+static int lrad_sbm_gc(lua_State *L)
+{
+  strblmap **sbmp = (strblmap **)luaL_checkudata(L, 1, LRAD_SBM_T);
+  if (sbmp && *sbmp)
+    delete *sbmp;
+  return 0;
+}
+
+/*
+ * Allocate a new string buffer list map in the heap
+ */
+static strblmap *lrad_newsbm(lua_State *L)
+{
+  strblmap *pairs = new strblmap;
+  strblmap **sbmp = (strblmap **)lua_newuserdata(L, sizeof(*sbmp));
+  *sbmp = pairs;
+
+  luaL_getmetatable(L, LRAD_SBM_T);
+  lua_setmetatable(L, -2);
+
+  return pairs;
 }
 
 /**
@@ -473,6 +504,79 @@ static int lrad_ioctx_getxattr(lua_State *L)
 
 
 /**
+Set omap values for oid
+@function omapset
+@string oid object name
+@table pairs [key,value] pairs to be set
+@return 0 on success, or nil on error
+@return errstr and retval if failed
+@usage ioctx:omapset('obj3', 'pairs')
+*/
+static int lrad_ioctx_omapset(lua_State *L)
+{
+  IoCtx *ioctx = lrad_checkioctx(L, 1);
+  const char *oid = luaL_checkstring(L, 2);
+  strblmap *pairs;
+  int ret;
+
+  if (lua_type(L, 3) != LUA_TTABLE)
+    return luaL_error(L, "omapset expects a table for the second argument");
+
+  pairs = lrad_newsbm(L);
+  lua_pushnil(L);
+  while (lua_next(L, 3) != 0){
+    size_t valLength;
+    const char *keyTemp = luaL_checkstring(L, -2);
+    const char *valTemp = luaL_checklstring(L, -1, &valLength);
+    bufferlist bl;
+
+    bl.append(valTemp, valLength);
+    (*pairs)[keyTemp] = bl;
+    lua_pop(L, 1);
+  }
+  ret = ioctx->omap_set(oid, *pairs);
+  return lrad_pushresult(L, (ret >= 0), ret);
+}
+
+/**
+Get omap values for oid
+@function omapget
+@string oid object name
+@string after list no keys smaller than after
+@int maxret maximum number of key/val pairs to retrieve
+@return map, numpairs or nil on failure
+@return errstr and retval if failed
+@usage map, numpairs  = ioctx:omapget('obj3', 'after', 'maxret')
+*/
+static int lrad_ioctx_omapget(lua_State *L)
+{
+  IoCtx *ioctx = lrad_checkioctx(L, 1);
+  const char *oid = luaL_checkstring(L, 2);
+  const char *after = luaL_checkstring(L, 3);
+  size_t maxret = luaL_checkint(L, 4);
+  strblmap *pairs = lrad_newsbm(L);
+  int ret;
+
+  ret = ioctx->omap_get_vals(oid, after, maxret, pairs);
+  if (ret < 0)
+    return lrad_pusherror(L, ret);
+
+  std::map<std::string, bufferlist>::iterator iter;
+  lua_newtable(L);
+  size_t pairsProcessed = 0;
+  for(iter = pairs->begin(); iter != pairs->end(); iter++){
+    const std::string *key = &(iter->first);
+    bufferlist *bl = &(iter->second);
+    lua_pushlstring(L, key->c_str(), key->length());
+    lua_pushlstring(L, bl->c_str(), bl->length());
+    lua_settable(L,-3);
+    pairsProcessed++;
+  }
+  lua_pushinteger(L, pairsProcessed);
+  return 2;
+}
+
+/**
 Execute an OSD class method on an object.
 @function exec
 @string oid the name of the object
@@ -540,6 +644,8 @@ static const luaL_Reg ioctxlib_m[] = {
   {"stat", lrad_ioctx_stat},
   {"setxattr", lrad_ioctx_setxattr},
   {"getxattr", lrad_ioctx_getxattr},
+  {"omapset", lrad_ioctx_omapset},
+  {"omapget", lrad_ioctx_omapget},
   {"exec", lrad_ioctx_exec},
   {NULL, NULL}
 };
@@ -569,6 +675,12 @@ LUALIB_API int luaopen_rados(lua_State *L)
   /* setup bufferlist userdata type */
   luaL_newmetatable(L, LRAD_BL_T);
   lua_pushcfunction(L, lrad_bl_gc);
+  lua_setfield(L, -2, "__gc");
+  lua_pop(L, 1);
+
+  /* setup string bufferlist map userdata type */
+  luaL_newmetatable(L, LRAD_SBM_T);
+  lua_pushcfunction(L, lrad_sbm_gc);
   lua_setfield(L, -2, "__gc");
   lua_pop(L, 1);
 
