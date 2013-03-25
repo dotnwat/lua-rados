@@ -13,6 +13,8 @@ extern "C" {
 #include <map>
 #include <rados/librados.hpp>
 
+using std::string;
+using std::map;
 using librados::bufferlist;
 using librados::Rados;
 using librados::IoCtx;
@@ -21,8 +23,6 @@ using librados::IoCtx;
 #define LRAD_TIOCTX_T "Rados.IoctxT"
 #define LRAD_BL_T "Rados.Bufferlist"
 #define LRAD_SBM_T "Rados.StrBLMap"
-
-typedef std::map<std::string, bufferlist> strblmap;
 
 static char reg_key_rados_refs;
 
@@ -133,7 +133,8 @@ static bufferlist *lrad_newbufferlist(lua_State *L)
  */
 static int lrad_sbm_gc(lua_State *L)
 {
-  strblmap **sbmp = (strblmap **)luaL_checkudata(L, 1, LRAD_SBM_T);
+  map<string, bufferlist> **sbmp =
+    (map<string, bufferlist>**)luaL_checkudata(L, 1, LRAD_SBM_T);
   if (sbmp && *sbmp)
     delete *sbmp;
   return 0;
@@ -142,10 +143,11 @@ static int lrad_sbm_gc(lua_State *L)
 /*
  * Allocate a new string buffer list map in the heap
  */
-static strblmap *lrad_newsbm(lua_State *L)
+static map<string, bufferlist> *lrad_newsbm(lua_State *L)
 {
-  strblmap *pairs = new strblmap;
-  strblmap **sbmp = (strblmap **)lua_newuserdata(L, sizeof(*sbmp));
+  map<string, bufferlist> *pairs = new map<string, bufferlist>;
+  map<string, bufferlist> **sbmp =
+    (map<string, bufferlist>**)lua_newuserdata(L, sizeof(*sbmp));
   *sbmp = pairs;
 
   luaL_getmetatable(L, LRAD_SBM_T);
@@ -516,7 +518,7 @@ static int lrad_ioctx_omapset(lua_State *L)
 {
   IoCtx *ioctx = lrad_checkioctx(L, 1);
   const char *oid = luaL_checkstring(L, 2);
-  strblmap *pairs;
+  map<string, bufferlist> *pairs;
   int ret;
 
   if (lua_type(L, 3) != LUA_TTABLE)
@@ -554,7 +556,7 @@ static int lrad_ioctx_omapget(lua_State *L)
   const char *oid = luaL_checkstring(L, 2);
   const char *after = luaL_checkstring(L, 3);
   size_t maxret = luaL_checkint(L, 4);
-  strblmap *pairs = lrad_newsbm(L);
+  map<string, bufferlist> *pairs = lrad_newsbm(L);
   int ret;
 
   ret = ioctx->omap_get_vals(oid, after, maxret, pairs);
