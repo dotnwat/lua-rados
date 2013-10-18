@@ -335,11 +335,11 @@ describe("ioctx object", function()
       end)
     end)
 
-    pending("pass the echo test", function()
-      local indata = 'asldjflkasjdlfkjasdf'
-      ret, outdata = ioctx:exec('oid', 'echo', 'echo', indata, #indata)
-      assert.is_equal(ret, #indata)
-      assert.is_equal(outdata, indata)
+    it("runs the cls_hello:say_hello example", function()
+      local indata = "there"
+      ret, outdata = ioctx:exec('oid', 'hello', 'say_hello', indata, #indata)
+      assert.is_equal(ret, 0)
+      assert.is_equal(outdata, "Hello, " .. indata .. "!")
     end)
   end)
 end)
