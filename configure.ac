@@ -19,6 +19,7 @@ AC_CHECK_HEADER([rados/librados.h],, AC_MSG_FAILURE([librados.h not found]))
 
 AC_CONFIG_FILES([
     Makefile
+    lua-rados.rockspec
 ])
 
 AC_OUTPUT

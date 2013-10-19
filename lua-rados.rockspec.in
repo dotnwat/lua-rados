@@ -1,0 +1,20 @@
+package="@PACKAGE@"
+version="@VERSION@-1"
+source = {
+  url = "https://github.com/noahdesu/@PACKAGE@/archive/v@VERSION@.tar.gz",
+  dir = "@PACKAGE@-@VERSION@"
+}
+description = {
+  summary = "Lua bindings to RADOS",
+  detailed = [[]],
+  homepage = "http://github.com/noahdesu/@PACKAGE@/",
+  license = "MIT"
+}
+dependencies = {
+  "lua >= 5.1"
+}
+build = {
+  type = "command",
+  build_command = "./bootstrap.sh && LUA=$(LUA) CPPFLAGS=-I$(LUA_INCDIR) ./configure --prefix=$(PREFIX) --libdir=$(LIBDIR) --datadir=$(LUADIR) && make clean && make",
+  install_command = "make install"
+}
