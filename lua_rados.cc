@@ -658,6 +658,8 @@ static const luaL_Reg radoslib_f[] = {
   {NULL, NULL}
 };
 
+extern "C" {
+
 LUALIB_API int luaopen_rados(lua_State *L)
 {
   /* setup rados_t userdata type */
@@ -698,4 +700,6 @@ LUALIB_API int luaopen_rados(lua_State *L)
   luaL_register(L, "rados", radoslib_f);
 
   return 0;
+}
+
 }
