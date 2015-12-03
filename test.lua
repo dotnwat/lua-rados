@@ -125,13 +125,13 @@ describe("ioctx object", function()
     cluster = nil
     collectgarbage()
     local data = 'wkjeflkwjelfkjwelfkjwef'
-    assert.is_equal(#data, ioctx:write('oid', data, #data, 0))
+    assert.is_equal(0, ioctx:write('oid', data, #data, 0))
   end)
 
   describe("write method", function()
     it("returns number of bytes written", function()
       local data = 'wkjeflkwjelfkjwelfkjwef'
-      assert.is_equal(#data, ioctx:write('oid', data, #data, 0))
+      assert.is_equal(0, ioctx:write('oid', data, #data, 0))
     end)
   end)
 

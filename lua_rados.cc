@@ -383,7 +383,7 @@ static int lrad_ioctx_stat(lua_State *L)
   @string buf buffer containing bytes
   @int length number of bytes to write
   @int offset offset in object from which to write
-  @return number of bytes written, or nil on error
+  @return 0 on success, or nil on error
   @return errstr and retval if failed
   @usage ioctx:write('obj3', 'data', #'data', 0)
   */
@@ -403,7 +403,7 @@ static int lrad_ioctx_write(lua_State *L)
 
   bl->clear();
 
-  return lrad_pushresult(L, (ret >= 0), ret);
+  return lrad_pushresult(L, (ret == 0), ret);
 }
 
 /**
