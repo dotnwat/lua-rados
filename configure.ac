@@ -13,7 +13,7 @@ AX_CXX_COMPILE_STDCXX_11([],[mandatory])
 AC_PROG_LIBTOOL
 AC_PROG_CXX
 
-AX_PROG_LUA(5.1, 5.2)
+AX_PROG_LUA(5.1)
 AX_LUA_HEADERS
 
 AC_CHECK_LIB([rados], [rados_version],, AC_MSG_FAILURE([librados not found]))
