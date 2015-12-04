@@ -1,7 +1,7 @@
 lua-rados
 =========
 
-[![Build Status](https://travis-ci.org/noahdesu/lua-rados.png)](https://travis-ci.org/noahdesu/lua-rados)
+<!--[![Build Status](https://travis-ci.org/noahdesu/lua-rados.png)](https://travis-ci.org/noahdesu/lua-rados)-->
 
 lua-rados is Lua bindings for the RADOS object store client library.
 
