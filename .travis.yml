@@ -2,18 +2,15 @@ language: cpp
 
 compiler:
   - g++
+  - clang
 
 branches:
   except:
     - gh-pages
 
 before_install:
-  - wget -q -O- 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | sudo apt-key add -
-  - echo deb http://ceph.com/debian-bobtail/ $(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/ceph.list
   - sudo apt-get update
-  - sudo apt-get install librados-dev
-  - sudo apt-get install lua5.1
-  - sudo apt-get install lua5.1-dev
+  - sudo apt-get install -y librados-dev lua5.2 lua5.2-dev
 
 install:
   - autoreconf -I m4 -ivf
@@ -28,3 +25,7 @@ notifications:
   email:
     on_success: always
     on_failure: always
+
+sudo: required 
+services:   
+  - docker
