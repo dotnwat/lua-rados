@@ -12,7 +12,7 @@ Installation
 
 Install the latest version (v0.0.1) with [LuaRocks]:
 
-    luarocks install https://raw.github.com/noahdesu/lua-rados/master/rockspecs/lua-rados-0.0.1-1.rockspec
+    luarocks install https://raw.github.com/noahdesu/lua-rados/master/rockspecs/lua-rados-0.0.2-1.rockspec
 
 Documentation
 -------------
