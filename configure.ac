@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
 
-AC_INIT([lua-rados], [0.0.1], [noahwatkins@gmail.com])
+AC_INIT([lua-rados], [0.0.2], [noahwatkins@gmail.com])
 
 AC_CONFIG_MACRO_DIR([m4])
 

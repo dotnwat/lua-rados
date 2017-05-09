@@ -19,3 +19,5 @@ missing
 *.o
 docs
 m4
+compile
+lua-rados.rockspec
